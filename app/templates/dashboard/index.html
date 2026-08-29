@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% from "components/icons.html" import icon_patient_add, icon_records, icon_chart, icon_heart, icon_arrow_right, icon_kidney %}
+
+{% block title %}Dashboard — CKD Diagnosis System{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+{% block page_subtitle %}Overview of your CKD screening activity{% endblock %}
+
+{% block content %}
+<div class="dashboard-grid">
+    <!-- Stats Row -->
+    <div class="stats-row">
+        <div class="stat-card stat-card--blue">
+            <div class="stat-icon-wrap">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><circle cx="10" cy="8" r="4" fill="#fff"/><path d="M2 20c0-3.3 3.6-6 8-6s8 2.7 8 6" fill="rgba(255,255,255,.5)"/></svg>
+            </div>
+            <div class="stat-info">
+                <span class="stat-value">{{ total_patients }}</span>
+                <span class="stat-label">Total Patients</span>
+            </div>
+        </div>
+        <div class="stat-card stat-card--purple">
+            <div class="stat-icon-wrap">
+                {{ icon_chart(28) }}
+            </div>
+            <div class="stat-info">
+                <span class="stat-value">{{ total_diagnoses }}</span>
+                <span class="stat-label">Diagnoses Made</span>
+            </div>
+        </div>
+        <div class="stat-card stat-card--teal">
+            <div class="stat-icon-wrap">
+                {{ icon_kidney(28) }}
+            </div>
+            <div class="stat-info">
+                <span class="stat-value">CKD</span>
+                <span class="stat-label">Screening System</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Action Cards -->
+    <h2 class="section-title">Quick Actions</h2>
+    <div class="action-grid">
+        <a href="{{ url_for('dashboard.patient_register') }}" class="action-card action-card--blue" id="action-register">
+            <div class="action-card-icon">{{ icon_patient_add(40) }}</div>
+            <div class="action-card-body">
+                <h3>Register New Patient</h3>
+                <p>Add a new patient to the system for CKD screening and monitoring</p>
+            </div>
+            <span class="action-arrow">{{ icon_arrow_right(20) }}</span>
+        </a>
+        <a href="{{ url_for('dashboard.patient_list') }}" class="action-card action-card--purple" id="action-records">
+            <div class="action-card-icon">{{ icon_records(40) }}</div>
+            <div class="action-card-body">
+                <h3>View Existing Records</h3>
+                <p>Browse patient records, view diagnosis history and screening results</p>
+            </div>
+            <span class="action-arrow">{{ icon_arrow_right(20) }}</span>
+        </a>
+    </div>
+
+    <!-- Recent Diagnoses -->
+    {% if recent_diagnoses %}
+    <h2 class="section-title">Recent Diagnoses</h2>
+    <div class="table-card">
+        <table class="data-table" id="recent-diagnoses-table">
+            <thead>
+                <tr>
+                    <th>Patient</th>
+                    <th>eGFR</th>
+                    <th>GFR Stage</th>
+                    <th>Risk Level</th>
+                    <th>Date</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for d in recent_diagnoses %}
+                <tr>
+                    <td class="td-name">{{ d.patient.full_name }}</td>
+                    <td><span class="mono">{{ d.egfr }}</span> <small class="text-muted">mL/min</small></td>
+                    <td><span class="badge badge--stage">{{ d.gfr_stage }}</span></td>
+                    <td><span class="badge badge--{{ d.risk_level|lower|replace(' ', '-') }}">{{ d.risk_level }}</span></td>
+                    <td class="td-date">{{ d.created_at.strftime('%d %b %Y') }}</td>
+                    <td><a href="{{ url_for('dashboard.diagnosis_result', diagnosis_id=d.id) }}" class="link-view">View {{ icon_arrow_right(14) }}</a></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-icon">{{ icon_chart(56) }}</div>
+        <h3>No diagnoses yet</h3>
+        <p>Register a patient and generate your first CKD screening.</p>
+        <a href="{{ url_for('dashboard.patient_register') }}" class="btn btn-primary">{{ icon_patient_add(18) }} Register Patient</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

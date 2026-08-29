@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% from "components/icons.html" import icon_edit, icon_back %}
+
+{% block title %}Edit {{ patient.full_name }} — CKD Diagnosis System{% endblock %}
+{% block page_title %}Edit Patient{% endblock %}
+{% block page_subtitle %}Updating record for {{ patient.patient_id }}{% endblock %}
+
+{% block content %}
+<div class="form-page">
+    <div class="form-card">
+        <div class="form-card-header">
+            <div class="form-card-icon">{{ icon_edit(32) }}</div>
+            <div>
+                <h2>Edit Patient Information</h2>
+                <p>Update the patient's details below and save your changes.</p>
+            </div>
+        </div>
+
+        <form method="POST" action="{{ url_for('dashboard.patient_edit', patient_id=patient.id) }}" class="styled-form" id="patient-edit-form">
+            {{ form.hidden_tag() }}
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="full_name" class="form-label">Full Name</label>
+                    {{ form.full_name(class="form-input", id="full_name") }}
+                    {% for error in form.full_name.errors %}
+                    <span class="form-error">{{ error }}</span>
+                    {% endfor %}
+                </div>
+                <div class="form-group">
+                    <label for="patient_id" class="form-label">Patient ID</label>
+                    {{ form.patient_id(class="form-input", id="patient_id") }}
+                    {% for error in form.patient_id.errors %}
+                    <span class="form-error">{{ error }}</span>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="age" class="form-label">Age (years)</label>
+                    {{ form.age(class="form-input", id="age") }}
+                    {% for error in form.age.errors %}
+                    <span class="form-error">{{ error }}</span>
+                    {% endfor %}
+                </div>
+                <div class="form-group">
+                    <label for="gender" class="form-label">Gender</label>
+                    {{ form.gender(class="form-input form-select", id="gender") }}
+                    {% for error in form.gender.errors %}
+                    <span class="form-error">{{ error }}</span>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="contact_info" class="form-label">Contact Information / Phone <span class="form-optional">(optional)</span></label>
+                {{ form.contact_info(class="form-input", id="contact_info") }}
+                {% for error in form.contact_info.errors %}
+                <span class="form-error">{{ error }}</span>
+                {% endfor %}
+            </div>
+
+            <div class="form-actions">
+                <a href="{{ url_for('dashboard.patient_detail', patient_id=patient.id) }}" class="btn btn-ghost">{{ icon_back(16) }} Cancel</a>
+                <button type="submit" class="btn btn-primary" id="edit-submit">{{ icon_edit(18) }} Save Changes</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,370 @@
+{% extends "base.html" %}
+{% from "components/icons.html" import icon_diagnosis, icon_kidney, icon_back, icon_heart, icon_shield, icon_warning, icon_danger, icon_edit, icon_trash %}
+
+{% block title %}Diagnosis Result — {{ diagnosis.patient.full_name }}{% endblock %}
+{% block page_title %}Diagnosis Result{% endblock %}
+{% block page_subtitle %}Screening completed {{ diagnosis.created_at.strftime('%d %b %Y at %H:%M') }}{% endblock %}
+
+{% block content %}
+<div class="result-page">
+    <!-- Patient + Risk Header -->
+    <div class="result-header-card">
+        <div class="result-patient">
+            <div class="patient-avatar-lg" style="background:linear-gradient(135deg, hsl({{ (diagnosis.patient_id * 67) % 360 }}, 65%, 50%), hsl({{ (diagnosis.patient_id * 67 + 40) % 360 }}, 65%, 60%))">
+                {{ diagnosis.patient.first_name[0] }}{{ diagnosis.patient.last_name[0] }}
+            </div>
+            <div>
+                <h2>{{ diagnosis.patient.full_name }}</h2>
+                <p class="detail-meta">{{ diagnosis.patient_age }} yrs &bull; {{ diagnosis.patient_gender }} &bull; {{ diagnosis.created_at.strftime('%d %b %Y %H:%M') }}</p>
+            </div>
+        </div>
+        <div class="risk-badge-lg badge--{{ diagnosis.risk_level|lower|replace(' ', '-') }}">
+            {% if diagnosis.risk_level == 'Low' %}{{ icon_shield(22) }}{% elif diagnosis.risk_level == 'Moderate' %}{{ icon_warning(22) }}{% else %}{{ icon_danger(22) }}{% endif %}
+            <span>{{ diagnosis.risk_level }} Risk</span>
+        </div>
+    </div>
+
+    <!-- Results Grid -->
+    <div class="results-grid">
+        <div class="result-card result-card--highlight">
+            <div class="result-card-top">
+                {{ icon_kidney(24) }}
+                <span class="result-label">eGFR</span>
+            </div>
+            <span class="result-value mono">{{ diagnosis.egfr }}</span>
+            <span class="result-unit">mL/min/1.73 m²</span>
+        </div>
+        <div class="result-card">
+            <div class="result-card-top">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="4" fill="#8b5cf6"/><text x="12" y="16" text-anchor="middle" fill="#fff" font-size="10" font-weight="700">GFR</text></svg>
+                <span class="result-label">GFR Stage</span>
+            </div>
+            <span class="result-value">{{ diagnosis.gfr_stage }}</span>
+            <span class="result-unit badge badge--stage">{{ diagnosis.gfr_stage }}</span>
+        </div>
+        <div class="result-card">
+            <div class="result-card-top">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="4" fill="#06b6d4"/><text x="12" y="16" text-anchor="middle" fill="#fff" font-size="9" font-weight="700">ACR</text></svg>
+                <span class="result-label">Albuminuria</span>
+            </div>
+            <span class="result-value">{{ diagnosis.albuminuria_stage }}</span>
+            <span class="result-unit badge badge--stage">{{ diagnosis.albuminuria_stage }}</span>
+        </div>
+        <div class="result-card">
+            <div class="result-card-top">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="#f59e0b"/><path d="M8 14c1 2 3 3 4 3s3-1 4-3" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/><circle cx="9" cy="10" r="1" fill="#fff"/><circle cx="15" cy="10" r="1" fill="#fff"/></svg>
+                <span class="result-label">Creatinine</span>
+            </div>
+            <span class="result-value mono">{{ diagnosis.serum_creatinine }}</span>
+            <span class="result-unit">mg/dL</span>
+        </div>
+        <div class="result-card">
+            <div class="result-card-top">
+                {{ icon_heart(24) }}
+                <span class="result-label">Urine ACR</span>
+            </div>
+            <span class="result-value mono">{{ diagnosis.urine_acr }}</span>
+            <span class="result-unit">mg/g</span>
+        </div>
+    </div>
+
+    <!-- Decision Tree ML Model Output -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 2rem; margin-bottom: 2rem; margin-top: 2rem;">
+        <!-- Prediction Panel -->
+        <div class="table-card" style="padding: 2rem; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" style="margin-bottom: 1rem;">
+                <path d="M12 2L2 22h20L12 2z" stroke="var(--primary)" stroke-width="2" stroke-linejoin="round"/>
+                <circle cx="12" cy="13" r="3" fill="var(--primary)"/>
+            </svg>
+            <h3 style="font-weight: 700; color: var(--text-color); margin-bottom: 0.5rem;">ML Decision Tree Prediction</h3>
+            <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.5rem;">UCI CKD Classifier Model Inference</p>
+            
+            {% if diagnosis.ml_prediction == 'CKD Detected' %}
+                <span class="badge badge--high" style="font-size: 1.1rem; padding: 0.6rem 1.6rem; border-radius: 50px; font-weight: 700;">
+                    CKD DETECTED
+                </span>
+            {% else %}
+                <span class="badge badge--low" style="font-size: 1.1rem; padding: 0.6rem 1.6rem; border-radius: 50px; font-weight: 700;">
+                    NO CKD DETECTED
+                </span>
+            {% endif %}
+        </div>
+
+        <!-- Confidence Gauge Panel -->
+        <div class="table-card" style="padding: 2rem; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;">
+            <h3 style="font-weight: 700; color: var(--text-color); margin-bottom: 1.5rem;">Prediction Confidence</h3>
+            
+            <!-- Circular Progress Ring -->
+            <div style="position: relative; width: 120px; height: 120px;">
+                <svg width="120" height="120" viewBox="0 0 120 120" style="transform: rotate(-90deg);">
+                    <circle cx="60" cy="60" r="50" fill="none" stroke="var(--border-color)" stroke-width="8"/>
+                    <circle cx="60" cy="60" r="50" fill="none" 
+                            stroke="{% if diagnosis.ml_prediction == 'CKD Detected' %}#ef4444{% else %}#10b981{% endif %}" 
+                            stroke-width="8" 
+                            stroke-dasharray="314.159" 
+                            stroke-dashoffset="{{ 314.159 * (1 - (diagnosis.ml_confidence or 0.5)) }}"
+                            stroke-linecap="round"/>
+                </svg>
+                <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 1.4rem; font-weight: 800; font-family: monospace; color: var(--text-color);">
+                    {{ ((diagnosis.ml_confidence or 0.5) * 100)|round(1) }}%
+                </div>
+            </div>
+            <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 1rem;">Based on training leaf distribution</p>
+        </div>
+    </div>
+
+    <!-- Clinical Parameters Panel -->
+    <div class="table-card" style="padding: 2rem;">
+        <h3 class="section-title" style="margin-bottom: 1.5rem;">Clinical Parameter Report</h3>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem;">
+            
+            <!-- Vitals & Demographics -->
+            <div>
+                <h4 style="font-weight: 700; color: var(--primary); margin-bottom: 0.75rem; border-bottom: 2px solid var(--border-color); padding-bottom: 0.25rem;">Patient Vitals</h4>
+                <table style="width: 100%; font-size: 0.9rem; line-height: 2;">
+                    <tr>
+                        <td style="color: var(--text-muted);">Blood Pressure:</td>
+                        <td class="mono" style="text-align: right; font-weight: 600;">{{ diagnosis.blood_pressure ~ ' mmHg' if diagnosis.blood_pressure is not none else '—' }}</td>
+                    </tr>
+                    <tr>
+                        <td style="color: var(--text-muted);">Hypertension:</td>
+                        <td style="text-align: right; font-weight: 600; text-transform: capitalize;">
+                            {% if diagnosis.hypertension == 'yes' %}
+                                <span class="badge badge--high">Yes</span>
+                            {% elif diagnosis.hypertension == 'no' %}
+                                <span class="badge badge--low">No</span>
+                            {% else %}
+                                —
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="color: var(--text-muted);">Diabetes Mellitus:</td>
+                        <td style="text-align: right; font-weight: 600; text-transform: capitalize;">
+                            {% if diagnosis.diabetes_mellitus == 'yes' %}
+                                <span class="badge badge--high">Yes</span>
+                            {% elif diagnosis.diabetes_mellitus == 'no' %}
+                                <span class="badge badge--low">No</span>
+                            {% else %}
+                                —
+                            {% endif %}
+                        </td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- Urine Parameters -->
+            <div>
+                <h4 style="font-weight: 700; color: var(--primary); margin-bottom: 0.75rem; border-bottom: 2px solid var(--border-color); padding-bottom: 0.25rem;">Urinalysis</h4>
+                <table style="width: 100%; font-size: 0.9rem; line-height: 2;">
+                    <tr>
+                        <td style="color: var(--text-muted);">Specific Gravity:</td>
+                        <td class="mono" style="text-align: right; font-weight: 600;">{{ diagnosis.specific_gravity if diagnosis.specific_gravity is not none else '—' }}</td>
+                    </tr>
+                    <tr>
+                        <td style="color: var(--text-muted);">Albumin Level (Dipstick):</td>
+                        <td class="mono" style="text-align: right; font-weight: 600;">
+                            {% if diagnosis.albumin is not none %}
+                                {{ diagnosis.albumin }} +
+                            {% else %}
+                                —
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="color: var(--text-muted);">Sugar Level:</td>
+                        <td class="mono" style="text-align: right; font-weight: 600;">{{ diagnosis.sugar_level if diagnosis.sugar_level is not none else '—' }}</td>
+                    </tr>
+                    <tr>
+                        <td style="color: var(--text-muted);">Red Blood Cells (RBC):</td>
+                        <td style="text-align: right; font-weight: 600; text-transform: capitalize;">
+                            {% if diagnosis.red_blood_cells == 'normal' %}
+                                <span class="badge badge--low">Normal</span>
+                            {% elif diagnosis.red_blood_cells == 'abnormal' %}
+                                <span class="badge badge--high">Abnormal</span>
+                            {% else %}
+                                —
+                            {% endif %}
+                        </td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- Blood Chemistry -->
+            <div>
+                <h4 style="font-weight: 700; color: var(--primary); margin-bottom: 0.75rem; border-bottom: 2px solid var(--border-color); padding-bottom: 0.25rem;">Blood Chemistry</h4>
+                <table style="width: 100%; font-size: 0.9rem; line-height: 2;">
+                    <tr>
+                        <td style="color: var(--text-muted);">Blood Urea:</td>
+                        <td class="mono" style="text-align: right; font-weight: 600;">{{ diagnosis.blood_urea ~ ' mg/dL' if diagnosis.blood_urea is not none else '—' }}</td>
+                    </tr>
+                    <tr>
+                        <td style="color: var(--text-muted);">Sodium:</td>
+                        <td class="mono" style="text-align: right; font-weight: 600;">{{ diagnosis.sodium ~ ' mEq/L' if diagnosis.sodium is not none else '—' }}</td>
+                    </tr>
+                    <tr>
+                        <td style="color: var(--text-muted);">Potassium:</td>
+                        <td class="mono" style="text-align: right; font-weight: 600;">{{ diagnosis.potassium ~ ' mEq/L' if diagnosis.potassium is not none else '—' }}</td>
+                    </tr>
+                    <tr>
+                        <td style="color: var(--text-muted);">Hemoglobin:</td>
+                        <td class="mono" style="text-align: right; font-weight: 600;">{{ diagnosis.hemoglobin ~ ' g/dL' if diagnosis.hemoglobin is not none else '—' }}</td>
+                    </tr>
+                    <tr>
+                        <td style="color: var(--text-muted);">White Blood Cell Count:</td>
+                        <td class="mono" style="text-align: right; font-weight: 600;">{{ diagnosis.white_blood_cell_count ~ ' cells/mcL' if diagnosis.white_blood_cell_count is not none else '—' }}</td>
+                    </tr>
+                </table>
+            </div>
+            
+        </div>
+    </div>
+
+    <!-- Recommendation -->
+    <div class="recommendation-card recommendation--{{ diagnosis.risk_level|lower|replace(' ', '-') }}">
+        <div class="recommendation-header">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="3" fill="#3b82f6"/><rect x="7" y="7" width="10" height="2" rx="1" fill="#fff"/><rect x="7" y="11" width="7" height="2" rx="1" fill="#bfdbfe"/><rect x="7" y="15" width="10" height="2" rx="1" fill="#bfdbfe"/></svg>
+            <h3>Clinical Recommendation</h3>
+        </div>
+        <p>{{ diagnosis.recommendation }}</p>
+    </div>
+
+    <!-- KDIGO Heat Map Reference -->
+    <div class="heatmap-card">
+        <div class="heatmap-header">
+            {{ icon_kidney(22) }}
+            <h3>KDIGO Risk Classification Matrix</h3>
+        </div>
+        <p class="heatmap-desc">Your patient's current position is highlighted in the matrix below.</p>
+        <div class="dataset-table-scroll">
+        <table class="heatmap-table">
+            <thead>
+                <tr>
+                    <th>GFR Stage</th>
+                    <th>A1<br><small>&lt;30 mg/g</small></th>
+                    <th>A2<br><small>30–300 mg/g</small></th>
+                    <th>A3<br><small>&gt;300 mg/g</small></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% set stages = ['G1', 'G2', 'G3a', 'G3b', 'G4', 'G5'] %}
+                {% set labels = {'G1': '≥90', 'G2': '60–89', 'G3a': '45–59', 'G3b': '30–44', 'G4': '15–29', 'G5': '<15'} %}
+                {% set matrix = {
+                    'G1':  ['low', 'moderate', 'high'],
+                    'G2':  ['low', 'moderate', 'high'],
+                    'G3a': ['moderate', 'high', 'very-high'],
+                    'G3b': ['high', 'very-high', 'very-high'],
+                    'G4':  ['very-high', 'very-high', 'very-high'],
+                    'G5':  ['very-high', 'very-high', 'very-high']
+                } %}
+                {% set risk_labels = {'low': 'Low', 'moderate': 'Moderate', 'high': 'High', 'very-high': 'Very High'} %}
+                {% for stage in stages %}
+                <tr>
+                    <th class="hm-row-header">{{ stage }}<br><small>{{ labels[stage] }}</small></th>
+                    {% for risk_class in matrix[stage] %}
+                    <td class="hm-cell hm-{{ risk_class }} {% if stage == diagnosis.gfr_stage and loop.index0 == {'A1':0,'A2':1,'A3':2}[diagnosis.albuminuria_stage] %}hm-current{% endif %}">
+                        {{ risk_labels[risk_class] }}
+                    </td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        </div>
+    </div>
+
+    </div>
+
+    <!-- Gemini AI Clinical Assistant -->
+    {% if diagnosis.gemini_report %}
+    <div class="table-card" style="padding: 2rem; margin-bottom: 2rem; margin-top: 2rem;">
+        <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem;">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" style="animation: pulse 2s infinite;">
+                <path d="M12 2L15 9L22 12L15 15L12 22L9 15L2 12L9 9L12 2Z" fill="url(#geminiGrad)"/>
+                <defs>
+                    <linearGradient id="geminiGrad" x1="2" y1="2" x2="22" y2="22" gradientUnits="userSpaceOnUse">
+                        <stop offset="0%" stop-color="#4f46e5"/>
+                        <stop offset="50%" stop-color="#06b6d4"/>
+                        <stop offset="100%" stop-color="#3b82f6"/>
+                    </linearGradient>
+                </defs>
+            </svg>
+            <h3 style="font-weight: 800; font-size: 1.4rem; background: linear-gradient(135deg, #818cf8, #34d399, #38bdf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin: 0;">Gemini AI Clinical Assistant</h3>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 2rem; margin-bottom: 2rem;">
+            <div>
+                <h4 style="font-weight: 700; color: var(--primary); margin-bottom: 0.5rem; margin-top: 0;">Medical Insights</h4>
+                <p style="font-size: 0.95rem; line-height: 1.6; color: var(--text-color); margin: 0;">{{ diagnosis.gemini_report.medical_insights }}</p>
+            </div>
+            <div>
+                <h4 style="font-weight: 700; color: var(--primary); margin-bottom: 0.5rem; margin-top: 0;">Risk Analysis</h4>
+                <p style="font-size: 0.95rem; line-height: 1.6; color: var(--text-color); margin: 0;">{{ diagnosis.gemini_report.risk_analysis }}</p>
+            </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; border-top: 1px solid var(--border-color); padding-top: 1.5rem;">
+            <!-- Suggested Precautions -->
+            <div style="background: rgba(239, 68, 68, 0.03); border: 1px solid rgba(239, 68, 68, 0.1); padding: 1.25rem; border-radius: 8px;">
+                <h4 style="font-weight: 700; color: #ef4444; margin-bottom: 0.75rem; margin-top: 0; display: flex; align-items: center; gap: 0.5rem;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                    Suggested Precautions
+                </h4>
+                <ul style="padding-left: 1.2rem; font-size: 0.9rem; line-height: 1.6; color: var(--text-color); margin: 0;">
+                    {% for item in diagnosis.gemini_report.suggested_precautions %}
+                        <li style="margin-bottom: 0.5rem;">{{ item }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <!-- Lifestyle Recommendations -->
+            <div style="background: rgba(16, 185, 129, 0.03); border: 1px solid rgba(16, 185, 129, 0.1); padding: 1.25rem; border-radius: 8px;">
+                <h4 style="font-weight: 700; color: #10b981; margin-bottom: 0.75rem; margin-top: 0; display: flex; align-items: center; gap: 0.5rem;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+                    Lifestyle Advice
+                </h4>
+                <ul style="padding-left: 1.2rem; font-size: 0.9rem; line-height: 1.6; color: var(--text-color); margin: 0;">
+                    {% for item in diagnosis.gemini_report.lifestyle_recommendations %}
+                        <li style="margin-bottom: 0.5rem;">{{ item }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <!-- Follow-up Recommendations -->
+            <div style="background: rgba(59, 130, 246, 0.03); border: 1px solid rgba(59, 130, 246, 0.1); padding: 1.25rem; border-radius: 8px;">
+                <h4 style="font-weight: 700; color: #3b82f6; margin-bottom: 0.75rem; margin-top: 0; display: flex; align-items: center; gap: 0.5rem;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                    Follow-Up Protocol
+                </h4>
+                <ul style="padding-left: 1.2rem; font-size: 0.9rem; line-height: 1.6; color: var(--text-color); margin: 0;">
+                    {% for item in diagnosis.gemini_report.follow_up_recommendations %}
+                        <li style="margin-bottom: 0.5rem;">{{ item }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="result-actions">
+        <a href="{{ url_for('dashboard.patient_detail', patient_id=diagnosis.patient_id) }}" class="btn btn-ghost">{{ icon_back(16) }} Back to Patient</a>
+        <a href="{{ url_for('dashboard.diagnosis_edit', diagnosis_id=diagnosis.id) }}" class="btn btn-warning" id="btn-edit-diagnosis">
+            {{ icon_edit(18) }} Edit Diagnosis
+        </a>
+        <form action="{{ url_for('dashboard.diagnosis_delete', diagnosis_id=diagnosis.id) }}" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this diagnosis record? This action CANNOT be undone.');">
+            <button type="submit" class="btn btn-danger" id="btn-delete-diagnosis">
+                {{ icon_trash(18) }} Delete Diagnosis
+            </button>
+        </form>
+        <a href="{{ url_for('dashboard.diagnosis_pdf', diagnosis_id=diagnosis.id) }}" class="btn btn-secondary">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Download PDF Report
+        </a>
+        <button onclick="window.print()" class="btn btn-secondary btn-print">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+            Print Report
+        </button>
+        <a href="{{ url_for('dashboard.diagnosis_new', patient_id=diagnosis.patient_id) }}" class="btn btn-primary">{{ icon_diagnosis(18) }} New Diagnosis</a>
+    </div>
+</div>
+{% endblock %}

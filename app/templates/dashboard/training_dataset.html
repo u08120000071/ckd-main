@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+{% from "components/icons.html" import icon_dataset, icon_search %}
+
+{% block title %}Training Dataset — CKD Diagnosis System{% endblock %}
+{% block page_title %}Training Dataset{% endblock %}
+{% block page_subtitle %}Viewing the training data used by the ML model ({{ total_rows_original }} records){% endblock %}
+
+{% block content %}
+
+<!-- Search & Info Bar -->
+<div class="dataset-toolbar">
+    <div class="dataset-stats">
+        <div class="dataset-stat-chip">
+            <span class="dataset-stat-icon">{{ icon_dataset(18) }}</span>
+            <span><strong>{{ total_rows_original }}</strong> total records</span>
+        </div>
+        <div class="dataset-stat-chip">
+            <span class="dataset-stat-dot dataset-stat-dot--info"></span>
+            <span><strong>{{ columns|length }}</strong> features</span>
+        </div>
+        {% if search %}
+        <div class="dataset-stat-chip dataset-stat-chip--filter">
+            <span>Filtered: <strong>{{ total_rows }}</strong> matches</span>
+            <a href="{{ url_for('dashboard.training_dataset') }}" class="dataset-clear-filter">✕</a>
+        </div>
+        {% endif %}
+    </div>
+    <form class="dataset-search-form" method="GET" action="{{ url_for('dashboard.training_dataset') }}">
+        <div class="dataset-search-wrap">
+            <span class="dataset-search-icon">{{ icon_search(16) }}</span>
+            <input type="text" name="search" class="dataset-search-input" placeholder="Search across all columns…" value="{{ search }}" autocomplete="off" id="dataset-search">
+        </div>
+        <button type="submit" class="btn btn-primary btn-sm">Search</button>
+    </form>
+</div>
+
+<!-- Dataset Table -->
+<div class="dataset-table-card">
+    <div class="dataset-table-scroll">
+        <table class="dataset-table" id="training-dataset-table">
+            <thead>
+                <tr>
+                    <th class="dataset-th-row">#</th>
+                    {% for col in columns %}
+                    <th>{{ col }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in rows %}
+                <tr>
+                    <td class="dataset-row-num">{{ (page - 1) * per_page + loop.index }}</td>
+                    {% for col in columns %}
+                        {% set cell = row[loop.index0] %}
+                        <td>
+                            {% if cell != cell or cell is none or cell == '' or cell == 'nan' %}
+                                <span class="dataset-nan">—</span>
+                            {% else %}
+                                {# Custom styled badges for specific columns #}
+                                {% if col == 'classification' %}
+                                    {% if 'notckd' in cell|lower %}
+                                        <span class="badge badge--premium badge--success">Healthy</span>
+                                    {% else %}
+                                        <span class="badge badge--premium badge--danger">CKD</span>
+                                    {% endif %}
+                                {% elif col in ['htn', 'dm', 'cad', 'pe', 'ane'] %}
+                                    {% if cell|lower == 'yes' %}
+                                        <span class="badge badge--danger-light">Yes</span>
+                                    {% elif cell|lower == 'no' %}
+                                        <span class="badge badge--success-light">No</span>
+                                    {% else %}
+                                        {{ cell }}
+                                    {% endif %}
+                                {% elif col == 'rbc' or col == 'pc' %}
+                                    {% if cell|lower == 'normal' %}
+                                        <span class="badge badge--success-light">Normal</span>
+                                    {% elif cell|lower == 'abnormal' %}
+                                        <span class="badge badge--danger-light">Abnormal</span>
+                                    {% else %}
+                                        {{ cell }}
+                                    {% endif %}
+                                {% elif col == 'pcc' or col == 'ba' %}
+                                    {% if cell|lower == 'present' %}
+                                        <span class="badge badge--danger-light">Present</span>
+                                    {% elif cell|lower == 'notpresent' %}
+                                        <span class="badge badge--success-light">Not Present</span>
+                                    {% else %}
+                                        {{ cell }}
+                                    {% endif %}
+                                {% elif col == 'appet' %}
+                                    {% if cell|lower == 'good' %}
+                                        <span class="badge badge--success-light">Good</span>
+                                    {% elif cell|lower == 'poor' %}
+                                        <span class="badge badge--danger-light">Poor</span>
+                                    {% else %}
+                                        {{ cell }}
+                                    {% endif %}
+                                {% else %}
+                                    {{ cell }}
+                                {% endif %}
+                            {% endif %}
+                        </td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+                {% if rows|length == 0 %}
+                <tr>
+                    <td colspan="{{ columns|length + 1 }}" class="dataset-empty">No records match your search.</td>
+                </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Pagination -->
+{% if total_pages > 1 %}
+<div class="dataset-pagination">
+    <span class="dataset-page-info">
+        Page <strong>{{ page }}</strong> of <strong>{{ total_pages }}</strong>
+    </span>
+    <div class="dataset-page-btns">
+        {% if page > 1 %}
+        <a href="{{ url_for('dashboard.training_dataset', page=1, search=search) }}" class="btn btn-ghost btn-sm">« First</a>
+        <a href="{{ url_for('dashboard.training_dataset', page=page-1, search=search) }}" class="btn btn-ghost btn-sm">‹ Prev</a>
+        {% endif %}
+
+        {% set start_page = [page - 2, 1]|max %}
+        {% set end_page = [page + 2, total_pages]|min %}
+        {% for p in range(start_page, end_page + 1) %}
+        <a href="{{ url_for('dashboard.training_dataset', page=p, search=search) }}"
+           class="btn btn-sm {% if p == page %}btn-primary{% else %}btn-ghost{% endif %}">{{ p }}</a>
+        {% endfor %}
+
+        {% if page < total_pages %}
+        <a href="{{ url_for('dashboard.training_dataset', page=page+1, search=search) }}" class="btn btn-ghost btn-sm">Next ›</a>
+        <a href="{{ url_for('dashboard.training_dataset', page=total_pages, search=search) }}" class="btn btn-ghost btn-sm">Last »</a>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}

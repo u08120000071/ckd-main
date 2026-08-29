@@ -1,0 +1,172 @@
+{% from "components/icons.html" import icon_dashboard, icon_patient_add, icon_records, icon_logout, icon_stethoscope, icon_check_circle, icon_danger, icon_info, icon_warning, icon_dataset, icon_chart %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="CKD Diagnosis System — Chronic Kidney Disease screening and management">
+    <title>{% block title %}CKD Diagnosis System{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="{% block body_class %}{% endblock %}">
+
+    {% if current_user.is_authenticated %}
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">
+                <div class="logo-mark">{{ icon_stethoscope(28) }}</div>
+                <div class="logo-text">CKD<span class="logo-accent">Dx</span></div>
+            </div>
+            <p class="logo-tagline">Diagnosis System</p>
+        </div>
+
+        <nav class="sidebar-nav">
+            <span class="nav-section-label">MAIN MENU</span>
+            <a href="{{ url_for('dashboard.index') }}" class="nav-link {% if request.endpoint == 'dashboard.index' %}active{% endif %}" id="nav-dashboard">
+                <span class="nav-icon">{{ icon_dashboard(20) }}</span>
+                <span>Dashboard</span>
+            </a>
+            <a href="{{ url_for('dashboard.patient_register') }}" class="nav-link {% if request.endpoint == 'dashboard.patient_register' %}active{% endif %}" id="nav-register">
+                <span class="nav-icon">{{ icon_patient_add(20) }}</span>
+                <span>Register Patient</span>
+            </a>
+            <a href="{{ url_for('dashboard.patient_list') }}" class="nav-link {% if request.endpoint == 'dashboard.patient_list' %}active{% endif %}" id="nav-patients">
+                <span class="nav-icon">{{ icon_records(20) }}</span>
+                <span>Patient Records</span>
+            </a>
+
+            <span class="nav-section-label">DATA</span>
+            <a href="{{ url_for('dashboard.training_dataset') }}" class="nav-link {% if request.endpoint == 'dashboard.training_dataset' %}active{% endif %}" id="nav-dataset">
+                <span class="nav-icon">{{ icon_dataset(20) }}</span>
+                <span>Training Dataset</span>
+            </a>
+            <a href="{{ url_for('dashboard.model_performance') }}" class="nav-link {% if request.endpoint == 'dashboard.model_performance' %}active{% endif %}" id="nav-performance">
+                <span class="nav-icon">{{ icon_chart(20) }}</span>
+                <span>Model Performance</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <div class="user-info">
+                <div class="user-avatar">{{ current_user.full_name[0] }}</div>
+                <div class="user-details">
+                    <span class="user-name">{{ current_user.full_name }}</span>
+                    <span class="user-role">Medical Staff</span>
+                </div>
+            </div>
+            <a href="{{ url_for('auth.logout') }}" class="nav-link logout-link" id="nav-logout">
+                <span class="nav-icon">{{ icon_logout(20) }}</span>
+                <span>Logout</span>
+            </a>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="main-wrapper">
+        <header class="topbar">
+            <div class="topbar-left" style="display: flex; align-items: center; gap: 1rem;">
+                <button class="mobile-toggle" id="mobile-toggle" aria-label="Toggle Navigation">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="3" y1="12" x2="21" y2="12"></line>
+                        <line x1="3" y1="6" x2="21" y2="6"></line>
+                        <line x1="3" y1="18" x2="21" y2="18"></line>
+                    </svg>
+                </button>
+                <div>
+                    <h1 class="page-title">{% block page_title %}Dashboard{% endblock %}</h1>
+                    <p class="page-subtitle">{% block page_subtitle %}{% endblock %}</p>
+                </div>
+            </div>
+            <div class="topbar-right">
+                <div class="topbar-greeting">
+                    <span class="greeting-text">Welcome back,</span>
+                    <span class="greeting-name">{{ current_user.full_name }}</span>
+                </div>
+            </div>
+        </header>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <div class="flash-container">
+            {% for category, message in messages %}
+            <div class="flash flash-{{ category }}" onclick="this.remove()">
+                <span class="flash-icon">
+                    {% if category == 'success' %}{{ icon_check_circle(18) }}{% elif category == 'error' %}{{ icon_danger(18) }}{% elif category == 'info' %}{{ icon_info(18) }}{% else %}{{ icon_warning(18) }}{% endif %}
+                </span>
+                <span class="flash-text">{{ message }}</span>
+                <span class="flash-close">×</span>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% endwith %}
+
+        <main class="content">
+    {% endif %}
+
+            {% block content %}{% endblock %}
+
+    {% if current_user.is_authenticated %}
+        </main>
+    </div>
+    {% endif %}
+
+    {% if not current_user.is_authenticated %}
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="flash-container flash-container--centered">
+        {% for category, message in messages %}
+        <div class="flash flash-{{ category }}" onclick="this.remove()">
+            <span class="flash-icon">
+                {% if category == 'success' %}{{ icon_check_circle(18) }}{% elif category == 'error' %}{{ icon_danger(18) }}{% elif category == 'info' %}{{ icon_info(18) }}{% else %}{{ icon_warning(18) }}{% endif %}
+            </span>
+            <span class="flash-text">{{ message }}</span>
+            <span class="flash-close">×</span>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
+    {% endif %}
+
+    {% block extra_js %}{% endblock %}
+
+    <!-- Mobile sidebar overlay -->
+    <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            // Flash auto-remove
+            document.querySelectorAll('.flash').forEach(el => {
+                setTimeout(() => {
+                    el.style.opacity = '0';
+                    el.style.transform = 'translateX(20px)';
+                    setTimeout(() => el.remove(), 400);
+                }, 5000);
+            });
+
+            // Mobile Navigation Toggle
+            const toggleBtn = document.getElementById("mobile-toggle");
+            const sidebar = document.getElementById("sidebar");
+            const overlay = document.getElementById("sidebar-overlay");
+            
+            if (toggleBtn && sidebar && overlay) {
+                toggleBtn.addEventListener("click", function() {
+                    sidebar.classList.toggle("active");
+                    overlay.classList.toggle("active");
+                });
+                
+                overlay.addEventListener("click", function() {
+                    sidebar.classList.remove("active");
+                    overlay.classList.remove("active");
+                });
+            }
+        });
+    </script>
+</body>
+</html>

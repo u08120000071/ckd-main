@@ -1,0 +1,394 @@
+{% extends "base.html" %}
+{% from "components/icons.html" import icon_check_circle, icon_danger %}
+
+{% block title %}Model Performance — CKD Diagnosis System{% endblock %}
+{% block page_title %}Model Performance & Statistics{% endblock %}
+{% block page_subtitle %}In-depth statistical evaluation and diagnostic performance of the Decision Tree model on the 10% test split ({{ total }} patient samples).{% endblock %}
+
+{% block content %}
+
+<!-- Performance Summary Cards -->
+<div class="metrics-grid">
+    <div class="metric-card metric-card--accuracy">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
+            <div class="metric-card-label" style="margin-bottom: 0;">Overall Accuracy</div>
+            <span style="display: flex; align-items: center; justify-content: center; background: #eff6ff; border-radius: var(--radius-md); padding: 0.35rem;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <linearGradient id="accGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#60a5fa" />
+                            <stop offset="100%" stop-color="#2563eb" />
+                        </linearGradient>
+                    </defs>
+                    <circle cx="12" cy="12" r="10" stroke="url(#accGrad)" stroke-width="2.5" />
+                    <circle cx="12" cy="12" r="6" stroke="url(#accGrad)" stroke-width="2" />
+                    <circle cx="12" cy="12" r="2" fill="url(#accGrad)" />
+                </svg>
+            </span>
+        </div>
+        <div class="metric-card-value">{{ (accuracy * 100)|round(1) }}%</div>
+        <div class="metric-card-desc">Overall classification correctness</div>
+        <div class="metric-card-glow"></div>
+    </div>
+    
+    <div class="metric-card metric-card--precision">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
+            <div class="metric-card-label" style="margin-bottom: 0;">Precision</div>
+            <span style="display: flex; align-items: center; justify-content: center; background: #ecfdf5; border-radius: var(--radius-md); padding: 0.35rem;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <linearGradient id="precGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#34d399" />
+                            <stop offset="100%" stop-color="#059669" />
+                        </linearGradient>
+                    </defs>
+                    <path d="M12 22C12 22 20 18 20 12V5L12 2L4 5V12C4 18 12 22 12 22Z" stroke="url(#precGrad)" stroke-width="2.5" stroke-linejoin="round" />
+                    <path d="M9 11L11 13L15 9" stroke="url(#precGrad)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+            </span>
+        </div>
+        <div class="metric-card-value">{{ (precision * 100)|round(1) }}%</div>
+        <div class="metric-card-desc">Reliability of CKD detections</div>
+        <div class="metric-card-glow"></div>
+    </div>
+    
+    <div class="metric-card metric-card--recall">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
+            <div class="metric-card-label" style="margin-bottom: 0;">Recall (Sensitivity)</div>
+            <span style="display: flex; align-items: center; justify-content: center; background: #fffbeb; border-radius: var(--radius-md); padding: 0.35rem;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <linearGradient id="recGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#fbbf24" />
+                            <stop offset="100%" stop-color="#d97706" />
+                        </linearGradient>
+                    </defs>
+                    <path d="M12 2A10 10 0 0 1 22 12M12 6A6 6 0 0 1 18 12M12 10A2 2 0 0 1 14 12" stroke="url(#recGrad)" stroke-width="2.5" stroke-linecap="round" />
+                    <circle cx="12" cy="12" r="2" fill="url(#recGrad)" />
+                </svg>
+            </span>
+        </div>
+        <div class="metric-card-value">{{ (recall * 100)|round(1) }}%</div>
+        <div class="metric-card-desc">Proportion of CKD cases identified</div>
+        <div class="metric-card-glow"></div>
+    </div>
+    
+    <div class="metric-card metric-card--f1">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
+            <div class="metric-card-label" style="margin-bottom: 0;">F1-Score</div>
+            <span style="display: flex; align-items: center; justify-content: center; background: #f5f3ff; border-radius: var(--radius-md); padding: 0.35rem;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <linearGradient id="f1Grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#a78bfa" />
+                            <stop offset="100%" stop-color="#7c3aed" />
+                        </linearGradient>
+                    </defs>
+                    <path d="M12 3v18M3 12h18" stroke="url(#f1Grad)" stroke-width="2.5" stroke-linecap="round" />
+                    <circle cx="6" cy="12" r="3" stroke="url(#f1Grad)" stroke-width="2" />
+                    <circle cx="18" cy="12" r="3" stroke="url(#f1Grad)" stroke-width="2" />
+                </svg>
+            </span>
+        </div>
+        <div class="metric-card-value">{{ (f1_score * 100)|round(1) }}%</div>
+        <div class="metric-card-desc">Harmonic mean of precision & recall</div>
+        <div class="metric-card-glow"></div>
+    </div>
+</div>
+
+<!-- Dynamic Statistical Graphs Section -->
+<div class="charts-row">
+    <div class="chart-container-card">
+        <h4>Diagnostic Profile Chart</h4>
+        <div style="position: relative; height: 320px; width: 100%;">
+            <canvas id="metricsChart"></canvas>
+        </div>
+    </div>
+    <div class="chart-container-card">
+        <h4>Lab Feature Importance weights</h4>
+        <div style="position: relative; height: 320px; width: 100%;">
+            <canvas id="importanceChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Matrix and Importance Layout -->
+<div class="perf-row">
+    <!-- Confusion Matrix Card -->
+    <div class="perf-col-6">
+        <div class="perf-card">
+            <div class="perf-card-header">
+                <h3 class="perf-card-title">Confusion Matrix</h3>
+                <span class="perf-card-subtitle">Actual vs. Predicted class counts</span>
+            </div>
+            <div class="perf-card-body">
+                <div class="matrix-container">
+                    <div class="matrix-grid-label-top">Predicted Class</div>
+                    
+                    <div class="matrix-table-wrap">
+                        <table class="matrix-table">
+                            <thead>
+                                <tr>
+                                    <th></th>
+                                    <th>PREDICTED HEALTHY</th>
+                                    <th>PREDICTED CKD</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="matrix-row-label">ACTUAL HEALTHY</td>
+                                    <td class="matrix-cell matrix-cell--tn">
+                                        <span class="matrix-cell-val">{{ tn }}</span>
+                                        <span class="matrix-cell-lbl">True Negative (TN)</span>
+                                    </td>
+                                    <td class="matrix-cell {% if fp == 0 %}matrix-cell--zero{% else %}matrix-cell--fp{% endif %}">
+                                        <span class="matrix-cell-val">{{ fp }}</span>
+                                        <span class="matrix-cell-lbl">False Positive (FP)</span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="matrix-row-label">ACTUAL CKD</td>
+                                    <td class="matrix-cell {% if fn == 0 %}matrix-cell--zero{% else %}matrix-cell--fn{% endif %}">
+                                        <span class="matrix-cell-val">{{ fn }}</span>
+                                        <span class="matrix-cell-lbl">False Negative (FN)</span>
+                                    </td>
+                                    <td class="matrix-cell matrix-cell--tp">
+                                        <span class="matrix-cell-val">{{ tp }}</span>
+                                        <span class="matrix-cell-lbl">True Positive (TP)</span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <div class="matrix-summary-notes">
+                    <div class="matrix-note-item">
+                        <span class="matrix-note-dot matrix-note-dot--success"></span>
+                        <span>Model correctly identified <strong>{{ tn + tp }}</strong> out of <strong>{{ total }}</strong> cases (specificity of {{ (specificity * 100)|round(1) }}%).</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Feature Table representation Card -->
+    <div class="perf-col-6">
+        <div class="perf-card">
+            <div class="perf-card-header">
+                <h3 class="perf-card-title">Feature Weights Grid</h3>
+                <span class="perf-card-subtitle">Influence weight of parameters in Decision Tree diagnostics</span>
+            </div>
+            <div class="perf-card-body p-0">
+                <div class="dataset-table-scroll" style="max-height: 380px;">
+                    <table class="dataset-table">
+                        <thead>
+                            <tr>
+                                <th>Feature</th>
+                                <th class="text-center">Importance Ratio</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for feat in feature_importances %}
+                            <tr>
+                                <td class="font-bold">{{ feat.name }}</td>
+                                <td class="text-center">
+                                    <div style="display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                                        <div class="importance-bar-bg" style="width: 100px; height: 6px; margin: 0;">
+                                            <div class="importance-bar-fill" style="width: {{ feat.importance * 100 }}%"></div>
+                                        </div>
+                                        <span>{{ (feat.importance * 100)|round(1) }}%</span>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Detailed Test Set Evaluation Table -->
+<div class="perf-card mt-6">
+    <div class="perf-card-header">
+        <h3 class="perf-card-title">Detailed Evaluation (Test Set Case-by-Case)</h3>
+        <span class="perf-card-subtitle">Full diagnostic test list showing classification alignment and confidence levels</span>
+    </div>
+    <div class="perf-card-body p-0">
+        <div class="dataset-table-scroll">
+            <table class="dataset-table dataset-table--perf" id="evaluation-details-table">
+                <thead>
+                    <tr>
+                        <th class="dataset-th-row">Case</th>
+                        <th>Age</th>
+                        <th>Hemo</th>
+                        <th>SG</th>
+                        <th>Al</th>
+                        <th>SC</th>
+                        <th>HTN</th>
+                        <th>DM</th>
+                        <th class="text-center">Expected (True)</th>
+                        <th class="text-center">Predicted</th>
+                        <th class="text-center">Model Confidence</th>
+                        <th class="text-center">Verification</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for case in detailed_cases %}
+                    <tr class="{% if not case.correct %}row-misclassified{% endif %}">
+                        <td class="dataset-row-num">{{ case.num }}</td>
+                        <td>{{ case.age }}</td>
+                        <td>{{ case.hemo }}</td>
+                        <td>{{ case.sg }}</td>
+                        <td>{{ case.al }}</td>
+                        <td>{{ case.sc }}</td>
+                        <td>
+                            {% if case.htn == 'YES' %}
+                            <span class="badge badge--danger-light">Yes</span>
+                            {% else %}
+                            <span class="badge badge--success-light">No</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if case.dm == 'YES' %}
+                            <span class="badge badge--danger-light">Yes</span>
+                            {% else %}
+                            <span class="badge badge--success-light">No</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center">
+                            {% if case.true_label == 'CKD' %}
+                            <span class="badge badge--premium badge--danger">CKD</span>
+                            {% else %}
+                            <span class="badge badge--premium badge--success">Healthy</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center">
+                            {% if case.pred_label == 'CKD' %}
+                            <span class="badge badge--premium badge--danger">CKD</span>
+                            {% else %}
+                            <span class="badge badge--premium badge--success">Healthy</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center font-bold">{{ case.confidence }}</td>
+                        <td class="text-center">
+                            {% if case.correct %}
+                            <span class="verification-badge verification-badge--correct">
+                                <span class="verification-icon">{{ icon_check_circle(14) }}</span> CORRECT
+                            </span>
+                            {% else %}
+                            <span class="verification-badge verification-badge--incorrect">
+                                <span class="verification-icon">{{ icon_danger(14) }}</span> MISCLASSIFIED
+                            </span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js CDN for interactive presentation -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    // 1. Metrics Bar Chart
+    const ctxMetrics = document.getElementById('metricsChart').getContext('2d');
+    new Chart(ctxMetrics, {
+        type: 'bar',
+        data: {
+            labels: ['Accuracy', 'Precision', 'Recall (Sens.)', 'F1-Score', 'Specificity'],
+            datasets: [{
+                label: 'Score (%)',
+                data: [
+                    {{ (accuracy * 100)|round(1) }},
+                    {{ (precision * 100)|round(1) }},
+                    {{ (recall * 100)|round(1) }},
+                    {{ (f1_score * 100)|round(1) }},
+                    {{ (specificity * 100)|round(1) }}
+                ],
+                backgroundColor: [
+                    'rgba(59, 130, 246, 0.85)',
+                    'rgba(16, 185, 129, 0.85)',
+                    'rgba(245, 158, 11, 0.85)',
+                    'rgba(139, 92, 246, 0.85)',
+                    'rgba(100, 116, 139, 0.85)'
+                ],
+                borderColor: [
+                    '#2563eb',
+                    '#059669',
+                    '#d97706',
+                    '#7c3aed',
+                    '#475569'
+                ],
+                borderWidth: 1.5,
+                borderRadius: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100,
+                    ticks: {
+                        callback: function(value) { return value + '%'; }
+                    }
+                }
+            }
+        }
+    });
+
+    // 2. Feature Importances Horizontal Bar Chart
+    const ctxImp = document.getElementById('importanceChart').getContext('2d');
+    const featNames = [];
+    const featVals = [];
+    {% for feat in feature_importances %}
+        {% if feat.importance > 0 %}
+            featNames.push('{{ feat.name }}');
+            featVals.push({{ (feat.importance * 100)|round(1) }});
+        {% endif %}
+    {% endfor %}
+
+    new Chart(ctxImp, {
+        type: 'bar',
+        data: {
+            labels: featNames,
+            datasets: [{
+                label: 'Relative Weight (%)',
+                data: featVals,
+                backgroundColor: 'rgba(99, 102, 241, 0.8)',
+                borderColor: '#4f46e5',
+                borderWidth: 1.5,
+                borderRadius: 4
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                x: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) { return value + '%'; }
+                    }
+                }
+            }
+        }
+    });
+});
+</script>
+
+{% endblock %}

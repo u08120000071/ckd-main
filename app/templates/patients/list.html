@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% from "components/icons.html" import icon_records, icon_patient_add, icon_arrow_right, icon_search %}
+
+{% block title %}Patient Records — CKD Diagnosis System{% endblock %}
+{% block page_title %}Patient Records{% endblock %}
+{% block page_subtitle %}{{ patients|length }} patient{{ 's' if patients|length != 1 }} registered{% endblock %}
+
+{% block content %}
+<div class="list-page">
+    <div class="list-header">
+        <div class="list-header-left">
+            {{ icon_records(24) }}
+            <span class="list-count">All Patients</span>
+        </div>
+        <a href="{{ url_for('dashboard.patient_register') }}" class="btn btn-primary btn-sm" id="btn-add-patient">
+            {{ icon_patient_add(16) }} New Patient
+        </a>
+    </div>
+
+    {% if patients %}
+    <div class="table-card">
+        <div class="dataset-table-scroll">
+            <table class="data-table" id="patients-table">
+                <thead>
+                    <tr>
+                        <th>Patient ID</th>
+                        <th>Name</th>
+                        <th>Age</th>
+                        <th>Gender</th>
+                        <th>Phone</th>
+                        <th>Registered</th>
+                        <th>Diagnoses</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in patients %}
+                    <tr>
+                        <td class="td-id mono">{{ p.patient_id }}</td>
+                        <td class="td-name">
+                            <div class="name-cell">
+                                <div class="mini-avatar" style="background:hsl({{ (p.id * 67) % 360 }}, 65%, 55%)">{{ p.first_name[0] }}</div>
+                                {{ p.full_name }}
+                            </div>
+                        </td>
+                        <td>{{ p.age }} yrs</td>
+                        <td>{{ p.gender }}</td>
+                        <td>{{ p.phone or '—' }}</td>
+                        <td class="td-date">{{ p.created_at.strftime('%d %b %Y') }}</td>
+                        <td><span class="badge badge--neutral">{{ p.diagnoses.count() }}</span></td>
+                        <td><a href="{{ url_for('dashboard.patient_detail', patient_id=p.id) }}" class="link-view">View {{ icon_arrow_right(14) }}</a></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-icon">{{ icon_records(56) }}</div>
+        <h3>No patients registered yet</h3>
+        <p>Start by registering your first patient for CKD screening.</p>
+        <a href="{{ url_for('dashboard.patient_register') }}" class="btn btn-primary">{{ icon_patient_add(18) }} Register Patient</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+{% from "components/icons.html" import icon_diagnosis, icon_info, icon_back %}
+
+{% block title %}Clinical Data Entry — {{ patient.full_name }}{% endblock %}
+{% block page_title %}Clinical Data Entry{% endblock %}
+{% block page_subtitle %}CKD screening parameters for {{ patient.full_name }}{% endblock %}
+
+{% block content %}
+<div class="form-page">
+    <div class="form-card">
+        <div class="form-card-header">
+            <div class="form-card-icon">{{ icon_diagnosis(32) }}</div>
+            <div>
+                <h2>Clinical Data Entry — {{ patient.full_name }}</h2>
+                <p>Hospital ID: {{ patient.patient_id }} ({{ patient.age }} yrs, {{ patient.gender }})</p>
+            </div>
+        </div>
+
+        <form method="POST" action="{{ url_for('dashboard.diagnosis_new', patient_id=patient.id) }}" class="styled-form" id="diagnosis-form">
+            {{ form.hidden_tag() }}
+
+            <div class="info-banner">
+                <span class="info-banner-icon">{{ icon_info(22) }}</span>
+                <div>
+                    <strong>Demographics pre-loaded</strong>
+                    <p>Age and gender are automatically retrieved from the patient demographics. Staging will be computed using the CKD-EPI (2021) race-free equation.</p>
+                </div>
+            </div>
+
+            <!-- 1. Primary Clinical Markers -->
+            <h3 class="form-section-title">Primary Clinical Markers</h3>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="serum_creatinine" class="form-label">Serum Creatinine (mg/dL)</label>
+                    {{ form.serum_creatinine(class="form-input", id="serum_creatinine") }}
+                    <span class="form-hint">Normal: 0.6 – 1.2 mg/dL</span>
+                    {% for error in form.serum_creatinine.errors %}
+                    <span class="form-error">{{ error }}</span>
+                    {% endfor %}
+                </div>
+                <div class="form-group">
+                    <label for="urine_acr" class="form-label">Urine ACR (mg/g) <span class="form-optional">(optional)</span></label>
+                    {{ form.urine_acr(class="form-input", id="urine_acr") }}
+                    <span class="form-hint">Will be calculated from Albumin if empty</span>
+                    {% for error in form.urine_acr.errors %}
+                    <span class="form-error">{{ error }}</span>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- 2. Vitals & Patient Risk Factors -->
+            <h3 class="form-section-title">Vitals & Patient Risk Factors</h3>
+            <div class="form-row" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+                <div class="form-group">
+                    <label for="blood_pressure" class="form-label">Blood Pressure (mmHg)</label>
+                    {{ form.blood_pressure(class="form-input", id="blood_pressure") }}
+                    <span class="form-hint">Typical: 50 – 180</span>
+                    {% for error in form.blood_pressure.errors %}
+                    <span class="form-error">{{ error }}</span>
+                    {% endfor %}
+                </div>
+                <div class="form-group">
+                    <label for="hypertension" class="form-label">Hypertension</label>
+                    {{ form.hypertension(class="form-input form-select", id="hypertension") }}
+                    {% for error in form.hypertension.errors %}
+                    <span class="form-error">{{ error }}</span>
+                    {% endfor %}
+                </div>
+                <div class="form-group">
+                    <label for="diabetes_mellitus" class="form-label">Diabetes Mellitus</label>
+                    {{ form.diabetes_mellitus(class="form-input form-select", id="diabetes_mellitus") }}
+                    {% for error in form.diabetes_mellitus.errors %}
+                    <span class="form-error">{{ error }}</span>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- 3. Urine Parameters -->
+            <h3 class="form-section-title">Urine Parameters</h3>
+            <div class="form-row" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+                <div class="form-group">
+                    <label for="specific_gravity" class="form-label">Specific Gravity</label>
+                    {{ form.specific_gravity(class="form-input form-select", id="specific_gravity") }}
+                    {% for error in form.specific_gravity.errors %}
+                    <span class="form-error">{{ error }}</span>
+                    {% endfor %}
+                </div>
+                <div class="form-group">
+                    <label for="albumin" class="form-label">Albumin (Dipstick Level)</label>
+                    {{ form.albumin(class="form-input form-select", id="albumin") }}
+                    {% for error in form.albumin.errors %}
+                    <span class="form-error">{{ error }}</span>
+                    {% endfor %}
+                </div>
+                <div class="form-group">
+                    <label for="sugar_level" class="form-label">Sugar Level</label>
+                    {{ form.sugar_level(class="form-input form-select", id="sugar_level") }}
+                    {% for error in form.sugar_level.errors %}
+                    <span class="form-error">{{ error }}</span>
+                    {% endfor %}
+                </div>
+                <div class="form-group">
+                    <label for="red_blood_cells" class="form-label">Red Blood Cells</label>
+                    {{ form.red_blood_cells(class="form-input form-select", id="red_blood_cells") }}
+                    {% for error in form.red_blood_cells.errors %}
+                    <span class="form-error">{{ error }}</span>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- 4. Blood Chemistry -->
+            <h3 class="form-section-title">Blood Chemistry</h3>
+            <div class="form-row" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));">
+                <div class="form-group">
+                    <label for="blood_urea" class="form-label">Blood Urea (mg/dL)</label>
+                    {{ form.blood_urea(class="form-input", id="blood_urea") }}
+                    <span class="form-hint">Normal: 7 – 20 mg/dL</span>
+                    {% for error in form.blood_urea.errors %}
+                    <span class="form-error">{{ error }}</span>
+                    {% endfor %}
+                </div>
+                <div class="form-group">
+                    <label for="sodium" class="form-label">Sodium (mEq/L)</label>
+                    {{ form.sodium(class="form-input", id="sodium") }}
+                    <span class="form-hint">Normal: 135 – 145</span>
+                    {% for error in form.sodium.errors %}
+                    <span class="form-error">{{ error }}</span>
+                    {% endfor %}
+                </div>
+                <div class="form-group">
+                    <label for="potassium" class="form-label">Potassium (mEq/L)</label>
+                    {{ form.potassium(class="form-input", id="potassium") }}
+                    <span class="form-hint">Normal: 3.5 – 5.0</span>
+                    {% for error in form.potassium.errors %}
+                    <span class="form-error">{{ error }}</span>
+                    {% endfor %}
+                </div>
+                <div class="form-group">
+                    <label for="hemoglobin" class="form-label">Hemoglobin (g/dL)</label>
+                    {{ form.hemoglobin(class="form-input", id="hemoglobin") }}
+                    <span class="form-hint">Normal: 12.0 – 17.5</span>
+                    {% for error in form.hemoglobin.errors %}
+                    <span class="form-error">{{ error }}</span>
+                    {% endfor %}
+                </div>
+                <div class="form-group">
+                    <label for="white_blood_cell_count" class="form-label">WBC Count (cells/mcL)</label>
+                    {{ form.white_blood_cell_count(class="form-input", id="white_blood_cell_count") }}
+                    <span class="form-hint">Normal: 4.5k – 11k</span>
+                    {% for error in form.white_blood_cell_count.errors %}
+                    <span class="form-error">{{ error }}</span>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <a href="{{ url_for('dashboard.patient_detail', patient_id=patient.id) }}" class="btn btn-ghost">{{ icon_back(16) }} Cancel</a>
+                <button type="submit" class="btn btn-primary" id="btn-submit">{{ icon_diagnosis(18) }} Validate & Save to Database</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% from "components/icons.html" import icon_diagnosis, icon_phone, icon_calendar, icon_arrow_right, icon_back, icon_user, icon_edit, icon_trash %}
+
+{% block title %}{{ patient.full_name }} — CKD Diagnosis System{% endblock %}
+{% block page_title %}Patient Detail{% endblock %}
+{% block page_subtitle %}Hospital ID: {{ patient.patient_id }} — System ID #{{ patient.id }}{% endblock %}
+
+{% block content %}
+<div class="detail-page">
+    <!-- Patient Info Card -->
+    <div class="detail-card">
+        <div class="detail-card-header">
+            <div class="patient-avatar-lg" style="background:linear-gradient(135deg, hsl({{ (patient.id * 67) % 360 }}, 65%, 50%), hsl({{ (patient.id * 67 + 40) % 360 }}, 65%, 60%))">
+                {{ patient.first_name[0] }}{{ patient.last_name[0] }}
+            </div>
+            <div class="detail-card-info">
+                <h2>{{ patient.full_name }}</h2>
+                <div class="detail-meta-row">
+                    <span class="detail-chip">{{ icon_user(14) }} {{ patient.age }} years</span>
+                    <span class="detail-chip">{{ patient.gender }}</span>
+                    {% if patient.phone %}
+                    <span class="detail-chip">{{ icon_phone(14) }} {{ patient.phone }}</span>
+                    {% endif %}
+                    <span class="detail-chip">{{ icon_calendar(14) }} {{ patient.created_at.strftime('%d %b %Y') }}</span>
+                </div>
+            </div>
+        </div>
+        <div class="detail-actions">
+            <a href="{{ url_for('dashboard.diagnosis_new', patient_id=patient.id) }}" class="btn btn-primary" id="btn-new-diagnosis">
+                {{ icon_diagnosis(18) }} Generate Diagnosis
+            </a>
+            <a href="{{ url_for('dashboard.patient_edit', patient_id=patient.id) }}" class="btn btn-warning" id="btn-edit-patient">
+                {{ icon_edit(18) }} Edit Patient
+            </a>
+            <form action="{{ url_for('dashboard.patient_delete', patient_id=patient.id) }}" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this patient and all their diagnostic history? This action CANNOT be undone.');">
+                <button type="submit" class="btn btn-danger" id="btn-delete-patient">
+                    {{ icon_trash(18) }} Delete Patient
+                </button>
+            </form>
+            <a href="{{ url_for('dashboard.patient_list') }}" class="btn btn-ghost">{{ icon_back(16) }} Back to List</a>
+        </div>
+    </div>
+
+    <!-- Diagnosis History -->
+    <h2 class="section-title">Diagnosis History</h2>
+
+    {% if diagnoses %}
+    <div class="table-card">
+        <div class="dataset-table-scroll">
+            <table class="data-table" id="diagnosis-history-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Creatinine</th>
+                        <th>ACR</th>
+                        <th>eGFR</th>
+                        <th>GFR Stage</th>
+                        <th>Albuminuria</th>
+                        <th>Risk</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for d in diagnoses %}
+                    <tr>
+                        <td class="td-date">{{ d.created_at.strftime('%d %b %Y %H:%M') }}</td>
+                        <td class="mono">{{ d.serum_creatinine }} mg/dL</td>
+                        <td class="mono">{{ d.urine_acr }} mg/g</td>
+                        <td class="mono">{{ d.egfr }}</td>
+                        <td><span class="badge badge--stage">{{ d.gfr_stage }}</span></td>
+                        <td><span class="badge badge--stage">{{ d.albuminuria_stage }}</span></td>
+                        <td><span class="badge badge--{{ d.risk_level|lower|replace(' ', '-') }}">{{ d.risk_level }}</span></td>
+                        <td style="display: flex; gap: 12px; align-items: center; justify-content: flex-end;">
+                            <a href="{{ url_for('dashboard.diagnosis_result', diagnosis_id=d.id) }}" class="link-view">View {{ icon_arrow_right(14) }}</a>
+                            <form action="{{ url_for('dashboard.diagnosis_delete', diagnosis_id=d.id) }}" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this diagnosis record? This action CANNOT be undone.');">
+                                <button type="submit" style="background: none; border: none; padding: 4px; cursor: pointer; color: #ef4444; display: flex; align-items: center; justify-content: center; transition: color 0.2s;" title="Delete Diagnosis" onmouseover="this.style.color='#b91c1c'" onmouseout="this.style.color='#ef4444'">
+                                    {{ icon_trash(16) }}
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-icon">{{ icon_diagnosis(56) }}</div>
+        <h3>No diagnoses yet</h3>
+        <p>Generate the first CKD screening for this patient.</p>
+        <a href="{{ url_for('dashboard.diagnosis_new', patient_id=patient.id) }}" class="btn btn-primary">{{ icon_diagnosis(18) }} Generate Diagnosis</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
